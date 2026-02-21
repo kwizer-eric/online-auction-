@@ -41,10 +41,23 @@ class SocketService {
                         auctionId: data.auctionId,
                         newPrice: data.amount,
                         bidderName: data.bidderName || "You",
+                        type: 'online',
                         timestamp: new Date().toISOString()
                     };
                     this._triggerSimulationEvent("bidUpdated", bidUpdate);
                 }, 1000);
+            }
+
+            // New: Simulate admin pushing a floor bid
+            if (event === "broadcastFloorBid") {
+                const bidUpdate = {
+                    auctionId: data.auctionId,
+                    newPrice: data.amount,
+                    bidderName: "Floor Bidder",
+                    type: 'floor',
+                    timestamp: new Date().toISOString()
+                };
+                this._triggerSimulationEvent("bidUpdated", bidUpdate);
             }
             return;
         }

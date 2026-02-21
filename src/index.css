@@ -8,6 +8,13 @@
   --color-primary-light: #fff5f3;
   /* very light tint for backgrounds */
 
+  --color-secondary: #475569;
+  /* slate-600 grey */
+  --color-secondary-dark: #1e293b;
+  /* slate-800 dark grey */
+  --color-accent-black: #0f172a;
+  /* high-contrast black/dark slate */
+
   --shadow-banking: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-banking-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }

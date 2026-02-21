@@ -10,43 +10,43 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
-                        <Link to="/" className="flex items-center gap-2">
-                            <div className="bg-primary p-2 rounded-lg">
+                        <Link to="/" className="flex items-center gap-2 group">
+                            <div className="bg-accent-black group-hover:bg-primary p-2 rounded-lg transition-colors duration-300">
                                 <Gavel className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-bold text-slate-900 tracking-tight">
-                                Secure<span className="text-primary">Bid</span>
+                            <span className="text-xl font-black text-accent-black tracking-tighter">
+                                SECURE<span className="text-primary italic">BID</span>
                             </span>
                         </Link>
 
-                        <div className="hidden md:ml-8 md:flex md:space-x-8">
-                            <Link to="/auctions" className="text-slate-600 hover:text-primary px-1 py-2 text-sm font-medium transition-colors">
-                                Browse Auctions
+                        <div className="hidden md:ml-10 md:flex md:space-x-8">
+                            <Link to="/auctions" className="text-secondary font-bold hover:text-primary px-1 py-2 text-sm transition-colors uppercase tracking-widest">
+                                Browse
                             </Link>
-                            <Link to="/categories" className="text-slate-600 hover:text-primary px-1 py-2 text-sm font-medium transition-colors">
-                                Categories
+                            <Link to="/categories" className="text-secondary font-bold hover:text-primary px-1 py-2 text-sm transition-colors uppercase tracking-widest">
+                                Markets
                             </Link>
-                            <Link to="/how-it-works" className="text-slate-600 hover:text-primary px-1 py-2 text-sm font-medium transition-colors">
-                                How it Works
+                            <Link to="/how-it-works" className="text-secondary font-bold hover:text-primary px-1 py-2 text-sm transition-colors uppercase tracking-widest">
+                                Trust
                             </Link>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <Link to="/admin" className="text-slate-600 hover:text-primary p-2 transition-colors">
+                    <div className="flex items-center gap-6">
+                        <Link to="/admin" className="text-secondary-dark hover:text-primary transition-colors">
                             <LayoutDashboard className="w-5 h-5" />
                         </Link>
-                        <Link to="/create-auction" className="hidden sm:flex items-center gap-2 btn-primary !py-1.5 !px-4">
+                        <Link to="/create-auction" className="hidden sm:flex items-center gap-2 btn-primary !py-2 !px-5 !text-xs !font-black uppercase tracking-widest">
                             <PlusCircle className="w-4 h-4" />
-                            <span>Host Auction</span>
+                            <span>Host Asset</span>
                         </Link>
-                        <div className="h-8 w-[1px] bg-slate-200 mx-1"></div>
+                        <div className="h-6 w-[1px] bg-slate-200"></div>
                         <button
                             onClick={() => navigate('/login')}
-                            className="flex items-center gap-2 text-slate-700 hover:text-primary font-medium px-3 py-2 transition-colors"
+                            className="flex items-center gap-2 text-accent-black hover:text-primary font-black text-xs uppercase tracking-widest transition-colors"
                         >
-                            <User className="w-5 h-5" />
-                            <span className="hidden sm:inline">Sign In</span>
+                            <User className="w-5 h-5 text-primary" />
+                            <span className="hidden sm:inline">Portal</span>
                         </button>
                     </div>
                 </div>

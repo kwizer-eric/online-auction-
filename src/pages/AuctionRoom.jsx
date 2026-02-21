@@ -25,6 +25,7 @@ const AuctionRoom = () => {
                     auctionId: data.auctionId,
                     bidderName: data.bidderName,
                     amount: data.newPrice,
+                    type: data.type || 'online',
                     timestamp: data.timestamp
                 };
                 setCurrentBids(prev => [newBid, ...prev]);
@@ -71,7 +72,10 @@ const AuctionRoom = () => {
                                     alt={auction.title}
                                     className="w-full h-full object-cover"
                                 />
-                                <div className="absolute bottom-4 left-4">
+                                <div className="absolute inset-y-0 left-0 z-20 w-full max-w-[320px] hidden md:block">
+                                    <ChatBox />
+                                </div>
+                                <div className="absolute bottom-4 right-4 z-10">
                                     <CountdownTimer endTime={auction.endTime} />
                                 </div>
                             </div>
@@ -163,7 +167,9 @@ const AuctionRoom = () => {
                             className="space-y-6"
                         >
                             <BidHistory bids={currentBids} />
-                            <ChatBox />
+                            <div className="md:hidden">
+                                <ChatBox />
+                            </div>
                         </motion.div>
                     </div>
                 </div>

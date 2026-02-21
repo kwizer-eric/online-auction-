@@ -30,13 +30,21 @@ const BidHistory = ({ bids }) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end">
                             <p className={`font-black tracking-tight ${index === 0 ? 'text-primary' : 'text-slate-900'}`}>
                                 ${bid.amount.toLocaleString()}
                             </p>
-                            {index === 0 && (
-                                <span className="text-[8px] font-black uppercase text-primary tracking-widest">Winning</span>
-                            )}
+                            <div className="flex gap-1 items-center mt-1">
+                                {bid.type === 'floor' && (
+                                    <span className="px-1.5 py-0.5 bg-accent-black text-white text-[7px] font-black rounded uppercase tracking-widest">Floor</span>
+                                )}
+                                {bid.type === 'online' && (
+                                    <span className="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[7px] font-black rounded uppercase tracking-widest">Online</span>
+                                )}
+                                {index === 0 && (
+                                    <span className="text-[8px] font-black uppercase text-primary tracking-widest">Winning</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}

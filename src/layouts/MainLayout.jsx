@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { Gavel } from 'lucide-react';
 
 const MainLayout = () => {
     return (
@@ -9,11 +10,11 @@ const MainLayout = () => {
             <main className="flex-grow">
                 <Outlet />
             </main>
-            <footer className="bg-slate-900 text-white py-12 mt-20">
+            <footer className="bg-accent-black text-white py-12 mt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <div className="flex justify-center items-center gap-2 mb-6">
                         <div className="bg-primary p-2 rounded-lg">
-                            <img src="/vite.svg" className="w-6 h-6" alt="Logo" />
+                            <Gavel className="w-6 h-6 text-white" />
                         </div>
                         <span className="text-xl font-bold tracking-tight">
                             Secure<span className="text-primary">Bid</span>
