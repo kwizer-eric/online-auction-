@@ -21,10 +21,13 @@ const AuctionCard = ({ auction }) => {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute top-3 right-3">
-                    <CountdownTimer endTime={auction.endTime} />
+                    <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg flex items-center gap-2 border border-white/10 shadow-xl">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest">Live Session</span>
+                    </div>
                 </div>
                 <div className="absolute top-3 left-3">
-                    <span className="bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-slate-600 px-2 py-1 rounded shadow-sm border border-white/20">
+                    <span className="bg-primary text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded shadow-lg">
                         {auction.category}
                     </span>
                 </div>
