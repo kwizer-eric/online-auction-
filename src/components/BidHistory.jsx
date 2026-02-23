@@ -36,10 +36,10 @@ const BidHistory = ({ bids }) => {
                             </p>
                             <div className="flex gap-1 items-center mt-1">
                                 {bid.type === 'floor' && (
-                                    <span className="px-1.5 py-0.5 bg-accent-black text-white text-[7px] font-black rounded uppercase tracking-widest">Floor</span>
+                                    <span className="px-2 py-0.5 bg-accent-black text-white text-[8px] font-black rounded uppercase tracking-[0.15em]">Floor</span>
                                 )}
                                 {bid.type === 'online' && (
-                                    <span className="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[7px] font-black rounded uppercase tracking-widest">Online</span>
+                                    <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 text-[8px] font-black rounded uppercase tracking-[0.15em]">Online</span>
                                 )}
                                 {index === 0 && (
                                     <span className="text-[8px] font-black uppercase text-primary tracking-widest">Winning</span>

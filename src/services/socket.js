@@ -50,10 +50,12 @@ class SocketService {
 
             // New: Simulate admin pushing a floor bid
             if (event === "broadcastFloorBid") {
+                const floorBidderNames = ["Floor Paddle #42", "On-Field Agent", "Room Bidder #109", "Private Collector (Floor)"];
+                const randomName = floorBidderNames[Math.floor(Math.random() * floorBidderNames.length)];
                 const bidUpdate = {
                     auctionId: data.auctionId,
                     newPrice: data.amount,
-                    bidderName: "Floor Bidder",
+                    bidderName: randomName,
                     type: 'floor',
                     timestamp: new Date().toISOString()
                 };

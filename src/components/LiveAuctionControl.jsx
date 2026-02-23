@@ -33,14 +33,22 @@ const LiveAuctionControl = ({ auction, onClose }) => {
 
             <div className="space-y-4">
                 <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">New Floor Price (USD)</label>
+                    <div className="flex justify-between items-end mb-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">New Floor Price (USD)</label>
+                        <button
+                            onClick={() => setBidAmount(auction.currentPrice + 500)}
+                            className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                        >
+                            Reset to Min (+500)
+                        </button>
+                    </div>
                     <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">$</span>
                         <input
                             type="number"
                             value={bidAmount}
                             onChange={(e) => setBidAmount(e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-xl py-4 pl-8 pr-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-colors"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl py-4 pl-8 pr-4 text-2xl font-black text-white focus:outline-none focus:border-primary transition-all shadow-inner"
                         />
                     </div>
                 </div>
@@ -50,19 +58,24 @@ const LiveAuctionControl = ({ auction, onClose }) => {
                         <button
                             key={inc}
                             onClick={() => setBidAmount(prev => Number(prev) + inc)}
-                            className="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-colors border border-slate-700"
+                            className="py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-black transition-all border-b-2 border-slate-950 active:translate-y-0.5 active:border-b-0"
                         >
                             +{inc.toLocaleString()}
                         </button>
                     ))}
                 </div>
 
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ready to Relay</span>
+                    <span className="text-lg font-black text-primary">${Number(bidAmount).toLocaleString()}</span>
+                </div>
+
                 <button
                     onClick={handleBroadcast}
-                    className="w-full bg-primary hover:bg-primary-hover py-4 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20"
+                    className="w-full bg-primary hover:bg-primary-hover py-4 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20 group"
                 >
-                    <Send className="w-5 h-5" />
-                    BROADCAST FLOOR BID
+                    <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    SYNC FLOOR BID TO ONLINE
                 </button>
 
                 <p className="text-[10px] text-center text-slate-500 font-medium italic">

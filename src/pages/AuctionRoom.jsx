@@ -66,7 +66,7 @@ const AuctionRoom = () => {
                             animate={{ opacity: 1, x: 0 }}
                             className="card p-4 overflow-hidden"
                         >
-                            <div className="aspect-video rounded-lg overflow-hidden relative">
+                            <div className="aspect-video rounded-lg overflow-hidden relative border border-slate-200 shadow-inner">
                                 <img
                                     src={auction.image}
                                     alt={auction.title}
@@ -75,8 +75,21 @@ const AuctionRoom = () => {
                                 <div className="absolute inset-y-0 left-0 z-20 w-full max-w-[320px] hidden md:block">
                                     <ChatBox />
                                 </div>
-                                <div className="absolute bottom-4 right-4 z-10">
-                                    <CountdownTimer endTime={auction.endTime} />
+                                <div className="absolute bottom-6 right-6 z-10">
+                                    <div className="bg-slate-900 border border-slate-700 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Session Status</span>
+                                            <span className="text-sm font-black text-white uppercase tracking-tighter flex items-center gap-2">
+                                                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                                                Live Event
+                                            </span>
+                                        </div>
+                                        <div className="w-px h-8 bg-slate-700" />
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Floor Presence</span>
+                                            <span className="text-sm font-black text-white uppercase tracking-tighter">Active Participants</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -84,7 +97,10 @@ const AuctionRoom = () => {
                         <div className="card p-8">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <h1 className="text-3xl font-black text-slate-900 mb-2">{auction.title}</h1>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <h1 className="text-3xl font-black text-slate-900">{auction.title}</h1>
+                                        <div className="px-2.5 py-1 bg-accent-black text-white rounded text-[10px] font-black uppercase tracking-widest">On-Field Event</div>
+                                    </div>
                                     <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase">
                                         ID: #SEC-{auction.id}092
                                     </span>
@@ -105,13 +121,8 @@ const AuctionRoom = () => {
                                     Asset Description
                                 </h3>
                                 <p className="text-slate-600 leading-relaxed">
-                                    {auction.description} Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                                    Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-                                    quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                                </p>
-                                <p className="text-slate-600 leading-relaxed mt-4">
-                                    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-                                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                                    {auction.description} This asset is being auctioned live at the central bank repository.
+                                    Online bids are being relayed to the floor in real-time.
                                 </p>
                             </div>
 
@@ -120,7 +131,7 @@ const AuctionRoom = () => {
                                     <Shield className="w-8 h-8 text-primary" />
                                     <div>
                                         <h4 className="font-bold text-slate-900 text-sm">Verified Authenticity</h4>
-                                        <p className="text-xs text-slate-500">Certificate of transparency included.</p>
+                                        <p className="text-xs text-slate-500">Physical inspection completed.</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
@@ -129,7 +140,7 @@ const AuctionRoom = () => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-slate-900 text-sm">Escrow Secure</h4>
-                                        <p className="text-xs text-slate-500">Funds protected by global regulations.</p>
+                                        <p className="text-xs text-slate-500">Instant settlement available.</p>
                                     </div>
                                 </div>
                             </div>
@@ -148,8 +159,8 @@ const AuctionRoom = () => {
                                     <h2 className="text-5xl font-black text-slate-900 tracking-tighter">
                                         ${currentPrice.toLocaleString()}
                                     </h2>
-                                    <div className="bg-primary-light text-primary px-2 py-1 rounded text-xs font-black">
-                                        LIVE
+                                    <div className="bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                        Active
                                     </div>
                                 </div>
                             </div>

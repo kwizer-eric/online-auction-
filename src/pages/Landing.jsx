@@ -34,20 +34,20 @@ const Landing = () => {
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-black text-white leading-[0.9] mb-6 tracking-tighter">
-                                BID ON <span className="text-primary">LEGACY.</span> <br />
-                                OWN THE <span className="italic font-serif font-light text-slate-400 text-4xl md:text-6xl">EXTRAORDINARY.</span>
+                                LIVE FLOW <span className="text-primary">HYBRID.</span> <br />
+                                BID FROM <span className="italic font-serif font-light text-slate-400 text-4xl md:text-6xl">THE FLOOR.</span>
                             </h1>
 
                             <p className="text-lg text-slate-400 mb-8 leading-snug max-w-lg font-medium">
-                                The world's most secure platform for high-velocity digital auctions. Built for the elite, verified by the best.
+                                Bridging the gap between physical trackside auctions and the global digital audience. Experience real-time synchronization.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Link to="/auctions" className="btn-primary !py-4 !px-8 text-base font-black flex items-center justify-center gap-3 active:scale-95 shadow-2xl shadow-primary/20">
-                                    Browse Inventory <ArrowRight className="w-5 h-5" />
+                                    Join Live Session <ArrowRight className="w-5 h-5" />
                                 </Link>
                                 <Link to="/register" className="px-8 py-4 rounded-xl font-black text-white border-2 border-slate-700 hover:bg-slate-800 transition-all text-sm text-center">
-                                    Get Verified
+                                    Register to Bid
                                 </Link>
                             </div>
 
