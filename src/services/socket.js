@@ -45,12 +45,12 @@ class SocketService {
                         timestamp: new Date().toISOString()
                     };
                     this._triggerSimulationEvent("bidUpdated", bidUpdate);
-                }, 1000);
+                }, 500); // Faster response for better UX
             }
 
-            // New: Simulate admin pushing a floor bid
+            // Simulate admin pushing a floor bid
             if (event === "broadcastFloorBid") {
-                const floorBidderNames = ["Floor Paddle #42", "On-Field Agent", "Room Bidder #109", "Private Collector (Floor)"];
+                const floorBidderNames = ["Floor Paddle #42", "On-Field Agent", "Room Bidder #109", "Private Collector (Floor)", "Floor Bidder #12"];
                 const randomName = floorBidderNames[Math.floor(Math.random() * floorBidderNames.length)];
                 const bidUpdate = {
                     auctionId: data.auctionId,
@@ -59,11 +59,40 @@ class SocketService {
                     type: 'floor',
                     timestamp: new Date().toISOString()
                 };
+                // Broadcast immediately for floor bids
                 this._triggerSimulationEvent("bidUpdated", bidUpdate);
             }
+
+            // Simulate joining auction room
+            if (event === "joinAuction") {
+                setTimeout(() => {
+                    this._triggerSimulationEvent("participantJoined", {
+                        auctionId: data.auctionId,
+                        participantCount: Math.floor(Math.random() * 20) + 5
+                    });
+                }, 300);
+            }
+
+            // Simulate leaving auction room
+            if (event === "leaveAuction") {
+                this._triggerSimulationEvent("participantLeft", {
+                    auctionId: data.auctionId
+                });
+            }
+
             return;
         }
         this.socket.emit(event, data);
+    }
+
+    // Join auction room (for real-time updates)
+    joinAuction(auctionId) {
+        this.emit('joinAuction', { auctionId });
+    }
+
+    // Leave auction room
+    leaveAuction(auctionId) {
+        this.emit('leaveAuction', { auctionId });
     }
 
     _triggerSimulationEvent(event, data) {

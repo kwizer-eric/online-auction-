@@ -1,9 +1,24 @@
-import React, { useState } from 'react';
-import { Gavel, Send, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Gavel, Send, X, Square } from 'lucide-react';
 import { socketService } from '../services/socket';
+import { auctionService } from '../services/auctionService';
 
-const LiveAuctionControl = ({ auction, onClose }) => {
+const LiveAuctionControl = ({ auction, onClose, onAuctionEnd }) => {
     const [bidAmount, setBidAmount] = useState(auction.currentPrice + 1000);
+    const [currentAuction, setCurrentAuction] = useState(auction);
+
+    useEffect(() => {
+        // Refresh auction data periodically
+        const interval = setInterval(() => {
+            const updated = auctionService.getAuction(auction.id);
+            if (updated) {
+                setCurrentAuction(updated);
+                setBidAmount(updated.currentPrice + 1000);
+            }
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [auction.id]);
 
     const handleBroadcast = () => {
         socketService.emit('broadcastFloorBid', {
@@ -23,7 +38,8 @@ const LiveAuctionControl = ({ auction, onClose }) => {
                     </div>
                     <div>
                         <h4 className="font-black uppercase tracking-widest text-xs opacity-50">Live Floor Control</h4>
-                        <p className="font-bold text-sm truncate max-w-[200px]">{auction.title}</p>
+                        <p className="font-bold text-sm truncate max-w-[200px]">{currentAuction.title}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Current: ${currentAuction.currentPrice.toLocaleString()}</p>
                     </div>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
@@ -72,14 +88,31 @@ const LiveAuctionControl = ({ auction, onClose }) => {
 
                 <button
                     onClick={handleBroadcast}
-                    className="w-full bg-primary hover:bg-primary-hover py-4 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20 group"
+                    disabled={currentAuction.status !== 'live'}
+                    className="w-full bg-primary hover:bg-primary-hover py-4 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     SYNC FLOOR BID TO ONLINE
                 </button>
 
+                {currentAuction.status === 'live' && (
+                    <button
+                        onClick={() => {
+                            auctionService.endAuction(currentAuction.id);
+                            if (onAuctionEnd) onAuctionEnd();
+                            onClose();
+                        }}
+                        className="w-full bg-rose-600 hover:bg-rose-700 py-3 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95"
+                    >
+                        <Square className="w-4 h-4" />
+                        END AUCTION
+                    </button>
+                )}
+
                 <p className="text-[10px] text-center text-slate-500 font-medium italic">
-                    Pushing this will notify all online users instantly.
+                    {currentAuction.status === 'live' 
+                        ? 'Pushing this will notify all online users instantly.'
+                        : 'Auction is not live. Start it from the dashboard.'}
                 </p>
             </div>
         </div>

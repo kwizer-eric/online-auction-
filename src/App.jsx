@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { socketService } from './services/socket';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -31,13 +32,31 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/auctions" element={<AuctionList />} />
           <Route path="/auction/:id" element={<AuctionRoom />} />
-          <Route path="/create-auction" element={<CreateAuction />} />
+        </Route>
+
+        {/* Protected Routes */}
+        <Route 
+          path="/create-auction" 
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <MainLayout />
+            </ProtectedRoute>
+          } 
+        >
+          <Route index element={<CreateAuction />} />
         </Route>
 
         {/* Admin Routes with AdminLayout */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminDashboard />} />
-          <Route path="auctions" element={<AdminDashboard />} /> {/* Fallback to dashboard for now */}
+          <Route path="auctions" element={<AdminDashboard />} />
           <Route path="bidders" element={<div className="p-8"><h2 className="text-2xl font-black">Bidders Management</h2><p className="text-slate-500">Feature coming soon.</p></div>} />
         </Route>
 

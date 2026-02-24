@@ -1,14 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Gavel, LogIn } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Mail, Lock, Gavel, LogIn, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        navigate('/admin');
+        setError('');
+        setIsLoading(true);
+
+        const result = await login(email, password);
+
+        if (result.success) {
+            // Redirect based on role
+            if (result.user.role === 'admin') {
+                navigate('/admin');
+            } else {
+                navigate('/auctions');
+            }
+        } else {
+            setError(result.error || 'Login failed. Please try again.');
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -36,6 +57,20 @@ const Login = () => {
                 className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0"
             >
                 <div className="bg-white py-10 px-6 shadow-banking rounded-2xl border border-slate-200 sm:px-12">
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="mb-6 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2"
+                            >
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <span className="text-sm font-medium">{error}</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-2">
@@ -49,8 +84,11 @@ const Login = () => {
                                     id="email"
                                     type="email"
                                     required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="input-field pl-10"
                                     placeholder="name@example.com"
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -67,10 +105,16 @@ const Login = () => {
                                     id="password"
                                     type="password"
                                     required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     className="input-field pl-10"
                                     placeholder="••••••••"
+                                    disabled={isLoading}
                                 />
                             </div>
+                            <p className="mt-2 text-xs text-slate-500">
+                                Demo: admin@example.com / user@example.com (password: any 6+ chars)
+                            </p>
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -92,9 +136,22 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <button type="submit" className="w-full btn-primary flex justify-center items-center gap-2 !py-3">
-                            <LogIn className="w-5 h-5" />
-                            Sign In to Your Account
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="w-full btn-primary flex justify-center items-center gap-2 !py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>Signing in...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <LogIn className="w-5 h-5" />
+                                    Sign In to Your Account
+                                </>
+                            )}
                         </button>
                     </form>
 

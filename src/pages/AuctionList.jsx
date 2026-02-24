@@ -1,16 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { mockAuctions } from '../mock/auctions';
+import { auctionService } from '../services/auctionService';
 import AuctionCard from '../components/AuctionCard';
 import { motion } from 'framer-motion';
 
 const AuctionList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+    const [auctions, setAuctions] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadAuctions();
+        // Refresh auctions periodically
+        const interval = setInterval(loadAuctions, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const loadAuctions = async () => {
+        await auctionService.loadAuctions();
+        setAuctions(auctionService.getAuctions());
+        setLoading(false);
+    };
 
     const categories = ['All', 'Watches', 'Art', 'Automobiles', 'Electronics', 'Jewelry'];
 
-    const filteredAuctions = mockAuctions.filter(auction => {
+    const filteredAuctions = auctions.filter(auction => {
         const matchesSearch = auction.title.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = activeCategory === 'All' || auction.category === activeCategory;
         return matchesSearch && matchesCategory;
@@ -20,8 +35,8 @@ const AuctionList = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 mb-2">Live Auctions</h1>
-                    <p className="text-slate-500">Find and bid on exclusive items currently available.</p>
+                    <h1 className="text-3xl font-black text-slate-900 mb-2">Scheduled Live Auctions</h1>
+                    <p className="text-slate-500">View upcoming live auction events. Attend on-field or online - all bids are shared in real-time.</p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -57,7 +72,12 @@ const AuctionList = () => {
                 ))}
             </div>
 
-            {filteredAuctions.length > 0 ? (
+            {loading ? (
+                <div className="text-center py-20">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600">Loading auctions...</p>
+                </div>
+            ) : filteredAuctions.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     {filteredAuctions.map((auction) => (
                         <AuctionCard key={auction.id} auction={auction} />

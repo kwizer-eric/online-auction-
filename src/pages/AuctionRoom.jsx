@@ -1,24 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Info, Share2, Heart, ShieldCheck as Shield } from 'lucide-react';
-import { mockAuctions } from '../mock/auctions';
+import { ChevronLeft, Info, Share2, Heart, ShieldCheck as Shield, MapPin } from 'lucide-react';
+import { auctionService } from '../services/auctionService';
 import { mockBids } from '../mock/bids';
 import { socketService } from '../services/socket';
 import CountdownTimer from '../components/CountdownTimer';
 import BidPanel from '../components/BidPanel';
 import BidHistory from '../components/BidHistory';
 import ChatBox from '../components/ChatBox';
+import AuctionRegistration from '../components/AuctionRegistration';
+import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 
 const AuctionRoom = () => {
     const { id } = useParams();
-    const auction = mockAuctions.find(a => a.id === Number(id));
+    const { user, isAuthenticated } = useAuth();
+    const [auction, setAuction] = useState(null);
     const [currentBids, setCurrentBids] = useState(mockBids.filter(b => b.auctionId === Number(id)));
-    const [currentPrice, setCurrentPrice] = useState(auction?.currentPrice || 0);
+    const [currentPrice, setCurrentPrice] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Listen for mock bid updates
-        socketService.on('bidUpdated', (data) => {
+        loadAuction();
+    }, [id]);
+
+    const loadAuction = async () => {
+        await auctionService.loadAuctions();
+        const loadedAuction = auctionService.getAuction(id);
+        if (loadedAuction) {
+            setAuction(loadedAuction);
+            setCurrentPrice(loadedAuction.currentPrice || 0);
+        }
+        setLoading(false);
+    };
+
+    // Refresh auction status periodically
+    useEffect(() => {
+        if (!auction) return;
+        const interval = setInterval(() => {
+            const updated = auctionService.getAuction(id);
+            if (updated) {
+                setAuction(updated);
+                setCurrentPrice(updated.currentPrice || 0);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [id, auction]);
+
+    useEffect(() => {
+        // Join auction room for real-time updates
+        socketService.joinAuction(Number(id));
+
+        // Listen for bid updates
+        const handleBidUpdate = (data) => {
             if (data.auctionId === Number(id)) {
                 const newBid = {
                     id: Date.now(),
@@ -31,18 +66,56 @@ const AuctionRoom = () => {
                 setCurrentBids(prev => [newBid, ...prev]);
                 setCurrentPrice(data.newPrice);
             }
-        });
+        };
+
+        // Listen for participant updates
+        const handleParticipantJoined = (data) => {
+            if (data.auctionId === Number(id)) {
+                // Could update participant count here
+                console.log('Participant joined:', data);
+            }
+        };
+
+        socketService.on('bidUpdated', handleBidUpdate);
+        socketService.on('participantJoined', handleParticipantJoined);
+
+        return () => {
+            socketService.leaveAuction(Number(id));
+        };
     }, [id]);
 
     const handlePlaceBid = (amount) => {
+        if (!isAuthenticated()) {
+            alert('Please login to place bids');
+            return;
+        }
+
+        // Check if user is registered (optional - can be enforced)
+        // For now, allow bidding if auction is live
+
         socketService.emit('placeBid', {
             auctionId: Number(id),
             amount: amount,
-            bidderName: 'You (Erick)'
+            bidderName: user?.name || 'Anonymous',
+            userId: user?.id
         });
     };
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600">Loading auction...</p>
+                </div>
+            </div>
+        );
+    }
+
     if (!auction) return <div className="p-20 text-center">Auction not found.</div>;
+
+    const auctionStatus = auction.status || 'scheduled';
+    const isLive = auctionStatus === 'live';
 
     return (
         <div className="bg-slate-50 min-h-screen">
@@ -57,6 +130,20 @@ const AuctionRoom = () => {
                     <span>/</span>
                     <span className="truncate max-w-[200px]">{auction.title}</span>
                 </div>
+
+                {/* Live Event Status Banner */}
+                {isLive && (
+                    <div className="mb-6 bg-primary text-white p-4 rounded-xl flex items-center justify-between shadow-lg">
+                        <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                            <div>
+                                <p className="font-black text-sm uppercase tracking-widest">Live Auction Event</p>
+                                <p className="text-xs opacity-90">On-field and online participants are bidding in real-time</p>
+                            </div>
+                        </div>
+                        <CountdownTimer auctionDate={auction.auctionDate} status={auctionStatus} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Left Column: Image & Info */}
@@ -99,11 +186,28 @@ const AuctionRoom = () => {
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
                                         <h1 className="text-3xl font-black text-slate-900">{auction.title}</h1>
-                                        <div className="px-2.5 py-1 bg-accent-black text-white rounded text-[10px] font-black uppercase tracking-widest">On-Field Event</div>
+                                        {isLive && (
+                                            <div className="px-2.5 py-1 bg-accent-black text-white rounded text-[10px] font-black uppercase tracking-widest">Live Event</div>
+                                        )}
                                     </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase">
-                                        ID: #SEC-{auction.id}092
-                                    </span>
+                                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase">
+                                            ID: #SEC-{auction.id}092
+                                        </span>
+                                        {auction.location && (
+                                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold flex items-center gap-1">
+                                                <ChevronLeft className="w-3 h-3 rotate-[-90deg]" />
+                                                {auction.location}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {auction.auctionDate && !isLive && (
+                                        <div className="mt-2">
+                                            <p className="text-xs text-slate-500 font-medium">
+                                                Scheduled for: {new Date(auction.auctionDate).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex gap-2">
                                     <button className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
@@ -120,10 +224,32 @@ const AuctionRoom = () => {
                                     <Info className="w-5 h-5 text-primary" />
                                     Asset Description
                                 </h3>
-                                <p className="text-slate-600 leading-relaxed">
-                                    {auction.description} This asset is being auctioned live at the central bank repository.
-                                    Online bids are being relayed to the floor in real-time.
+                                <p className="text-slate-600 leading-relaxed mb-4">
+                                    {auction.description}
                                 </p>
+                                {isLive ? (
+                                    <div className="bg-primary-light border border-primary/20 rounded-xl p-4">
+                                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                            <strong className="text-primary">Live Event:</strong> This auction is currently being conducted as a live event. 
+                                            Participants are attending both on-field (at {auction.location || 'the physical location'}) and online. 
+                                            All bids from both groups are being shared in real-time and coordinated by the admin.
+                                        </p>
+                                    </div>
+                                ) : auctionStatus === 'scheduled' ? (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                                            <strong>Scheduled Live Event:</strong> This auction will be conducted as a live event on the scheduled date. 
+                                            You can attend either on-field (at {auction.location || 'the physical location'}) or online. 
+                                            All bids will be shared in real-time between both groups during the live event.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="bg-slate-100 border border-slate-200 rounded-xl p-4">
+                                        <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                            This auction has been completed.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -165,10 +291,34 @@ const AuctionRoom = () => {
                                 </div>
                             </div>
 
-                            <BidPanel
-                                currentPrice={currentPrice}
-                                onPlaceBid={handlePlaceBid}
-                            />
+                            {auctionStatus === 'scheduled' && (
+                                <AuctionRegistration auction={auction} />
+                            )}
+
+                            {isLive ? (
+                                <BidPanel
+                                    currentPrice={currentPrice}
+                                    onPlaceBid={handlePlaceBid}
+                                />
+                            ) : auctionStatus === 'scheduled' ? (
+                                <div className="card p-6 bg-slate-900 text-white border-0 shadow-2xl">
+                                    <div className="text-center py-8">
+                                        <h3 className="text-xl font-black mb-2">Auction Not Started</h3>
+                                        <p className="text-slate-400 mb-4">This live auction event will begin on:</p>
+                                        <p className="text-2xl font-black text-primary mb-4">
+                                            {new Date(auction.auctionDate).toLocaleString()}
+                                        </p>
+                                        <CountdownTimer auctionDate={auction.auctionDate} status={auctionStatus} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="card p-6 bg-slate-900 text-white border-0 shadow-2xl">
+                                    <div className="text-center py-8">
+                                        <h3 className="text-xl font-black mb-2">Auction Completed</h3>
+                                        <p className="text-slate-400">This auction has ended.</p>
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
 
                         <motion.div

@@ -1,14 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Gavel, UserPlus, ShieldCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { User, Mail, Lock, Gavel, UserPlus, ShieldCheck, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 const Register = () => {
     const navigate = useNavigate();
+    const { register } = useAuth();
+    const [formData, setFormData] = useState({
+        name: '',
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    });
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        navigate('/login');
+        setError('');
+
+        // Validation
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        setIsLoading(true);
+
+        const result = await register({
+            name: formData.name,
+            username: formData.username,
+            email: formData.email,
+            password: formData.password
+        });
+
+        if (result.success) {
+            navigate('/auctions');
+        } else {
+            setError(result.error || 'Registration failed. Please try again.');
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -36,6 +81,20 @@ const Register = () => {
                 className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl px-4 sm:px-0"
             >
                 <div className="bg-white py-10 px-6 shadow-banking rounded-2xl border border-slate-200 sm:px-12">
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="mb-6 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2"
+                            >
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <span className="text-sm font-medium">{error}</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -44,12 +103,30 @@ const Register = () => {
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <User className="h-5 w-5 text-slate-400" />
                                     </div>
-                                    <input type="text" required className="input-field pl-10" placeholder="John Doe" />
+                                    <input 
+                                        type="text" 
+                                        name="name"
+                                        required 
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className="input-field pl-10" 
+                                        placeholder="John Doe"
+                                        disabled={isLoading}
+                                    />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Username</label>
-                                <input type="text" required className="input-field" placeholder="johndoe88" />
+                                <input 
+                                    type="text" 
+                                    name="username"
+                                    required 
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    className="input-field" 
+                                    placeholder="johndoe88"
+                                    disabled={isLoading}
+                                />
                             </div>
                         </div>
 
@@ -59,7 +136,16 @@ const Register = () => {
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Mail className="h-5 w-5 text-slate-400" />
                                 </div>
-                                <input type="email" required className="input-field pl-10" placeholder="name@example.com" />
+                                <input 
+                                    type="email" 
+                                    name="email"
+                                    required 
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className="input-field pl-10" 
+                                    placeholder="name@example.com"
+                                    disabled={isLoading}
+                                />
                             </div>
                         </div>
 
@@ -70,12 +156,30 @@ const Register = () => {
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <Lock className="h-5 w-5 text-slate-400" />
                                     </div>
-                                    <input type="password" required className="input-field pl-10" placeholder="••••••••" />
+                                    <input 
+                                        type="password" 
+                                        name="password"
+                                        required 
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        className="input-field pl-10" 
+                                        placeholder="••••••••"
+                                        disabled={isLoading}
+                                    />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Confirm Password</label>
-                                <input type="password" required className="input-field" placeholder="••••••••" />
+                                <input 
+                                    type="password" 
+                                    name="confirmPassword"
+                                    required 
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className="input-field" 
+                                    placeholder="••••••••"
+                                    disabled={isLoading}
+                                />
                             </div>
                         </div>
 
@@ -88,9 +192,22 @@ const Register = () => {
                             </p>
                         </div>
 
-                        <button type="submit" className="w-full btn-primary flex justify-center items-center gap-2 !py-4 text-lg">
-                            <UserPlus className="w-6 h-6" />
-                            Complete Registration
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="w-full btn-primary flex justify-center items-center gap-2 !py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>Registering...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus className="w-6 h-6" />
+                                    Complete Registration
+                                </>
+                            )}
                         </button>
                     </form>
                 </div>

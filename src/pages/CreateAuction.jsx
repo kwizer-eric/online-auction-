@@ -105,16 +105,22 @@ const CreateAuction = () => {
                         <div className="space-y-6">
                             <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 flex items-center gap-2">
                                 <Calendar className="w-5 h-5 text-primary" />
-                                Auction Schedule
+                                Live Auction Schedule
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">End Date & Time</label>
-                                    <input type="datetime-local" className="input-field" />
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Auction Date & Time</label>
+                                    <input type="datetime-local" className="input-field" required />
+                                    <p className="text-xs text-slate-500 mt-1">The scheduled date and time for the live auction event</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Physical Location</label>
+                                    <input type="text" className="input-field" placeholder="e.g. Central Bank Repository - Hall A" required />
+                                    <p className="text-xs text-slate-500 mt-1">Where the on-field auction will take place</p>
                                 </div>
                                 <div className="p-3 bg-primary-light rounded-lg border border-primary/10">
                                     <p className="text-xs text-primary font-medium leading-relaxed">
-                                        <strong>Note:</strong> Auctions must run for a minimum of 24 hours to ensure global participation.
+                                        <strong>Live Event:</strong> This auction will be conducted as a live event on the specified date. Both on-field and online participants will bid in real-time during the event.
                                     </p>
                                 </div>
                             </div>

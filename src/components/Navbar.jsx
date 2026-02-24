@@ -1,9 +1,16 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Gavel, User, LogOut, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const { user, logout, isAdmin } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
 
     return (
         <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -33,21 +40,55 @@ const Navbar = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <Link to="/admin" className="text-secondary-dark hover:text-primary transition-colors">
-                            <LayoutDashboard className="w-5 h-5" />
-                        </Link>
-                        <Link to="/create-auction" className="hidden sm:flex items-center gap-2 btn-primary !py-2 !px-5 !text-xs !font-black uppercase tracking-widest">
-                            <PlusCircle className="w-4 h-4" />
-                            <span>Host Asset</span>
-                        </Link>
-                        <div className="h-6 w-[1px] bg-slate-200"></div>
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="flex items-center gap-2 text-accent-black hover:text-primary font-black text-xs uppercase tracking-widest transition-colors"
-                        >
-                            <User className="w-5 h-5 text-primary" />
-                            <span className="hidden sm:inline">Portal</span>
-                        </button>
+                        {user ? (
+                            <>
+                                {isAdmin() && (
+                                    <>
+                                        <Link to="/admin" className="text-secondary-dark hover:text-primary transition-colors">
+                                            <LayoutDashboard className="w-5 h-5" />
+                                        </Link>
+                                        <Link to="/create-auction" className="hidden sm:flex items-center gap-2 btn-primary !py-2 !px-5 !text-xs !font-black uppercase tracking-widest">
+                                            <PlusCircle className="w-4 h-4" />
+                                            <span>Host Asset</span>
+                                        </Link>
+                                    </>
+                                )}
+                                <div className="h-6 w-[1px] bg-slate-200"></div>
+                                <div className="flex items-center gap-3">
+                                    <div className="hidden sm:flex flex-col items-end">
+                                        <span className="text-xs font-bold text-slate-900">{user.name}</span>
+                                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">{user.role}</span>
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex items-center gap-2 text-accent-black hover:text-primary font-black text-xs uppercase tracking-widest transition-colors"
+                                    >
+                                        <LogOut className="w-5 h-5 text-primary" />
+                                        <span className="hidden sm:inline">Logout</span>
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {isAdmin() && (
+                                    <Link to="/admin" className="text-secondary-dark hover:text-primary transition-colors">
+                                        <LayoutDashboard className="w-5 h-5" />
+                                    </Link>
+                                )}
+                                <Link to="/create-auction" className="hidden sm:flex items-center gap-2 btn-primary !py-2 !px-5 !text-xs !font-black uppercase tracking-widest">
+                                    <PlusCircle className="w-4 h-4" />
+                                    <span>Host Asset</span>
+                                </Link>
+                                <div className="h-6 w-[1px] bg-slate-200"></div>
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className="flex items-center gap-2 text-accent-black hover:text-primary font-black text-xs uppercase tracking-widest transition-colors"
+                                >
+                                    <User className="w-5 h-5 text-primary" />
+                                    <span className="hidden sm:inline">Portal</span>
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
