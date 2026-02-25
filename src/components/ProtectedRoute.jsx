@@ -16,10 +16,12 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     }
 
     if (!isAuthenticated()) {
+        console.log('ProtectedRoute: User not authenticated, redirecting to /login');
         return <Navigate to="/login" replace />;
     }
 
     if (requireAdmin && !isAdmin()) {
+        console.log('ProtectedRoute: User not admin, redirecting to /');
         return <Navigate to="/" replace />;
     }
 

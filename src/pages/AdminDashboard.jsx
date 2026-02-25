@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Users,
     Gavel,
@@ -7,7 +7,8 @@ import {
     Eye,
     Radio,
     Play,
-    Square
+    Square,
+    AlertTriangle
 } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import LiveAuctionControl from '../components/LiveAuctionControl';
@@ -16,9 +17,11 @@ import { registrationAPI } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminDashboard = () => {
+    const navigate = useNavigate();
     const [liveAuction, setLiveAuction] = useState(null);
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         loadAuctions();
@@ -26,10 +29,12 @@ const AdminDashboard = () => {
 
     const loadAuctions = async () => {
         try {
+            setError(null);
             const res = await auctionAPI.getAll();
             setAuctions(res.data || []);
         } catch (err) {
             console.error('Failed to load auctions:', err);
+            setError('Could not connect to the auction service. Please check your backend connection.');
         } finally {
             setLoading(false);
         }
@@ -134,6 +139,12 @@ const AdminDashboard = () => {
                     <button className="text-primary font-black text-xs uppercase tracking-widest hover:underline">Export Portfolio</button>
                 </div>
                 <div className="overflow-x-auto">
+                    {error && (
+                        <div className="p-4 m-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 flex items-center gap-3">
+                            <AlertTriangle className="w-5 h-5" />
+                            <p className="text-xs font-bold">{error}</p>
+                        </div>
+                    )}
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
@@ -163,7 +174,11 @@ const AdminDashboard = () => {
                                     <tr key={auction.id} className="hover:bg-slate-50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <img src={auction.image} className="w-10 h-10 rounded-lg object-cover shadow-sm grayscale group-hover:grayscale-0 transition-all" alt="" />
+                                                <img
+                                                    src={auction.image_url || auction.image || `https://picsum.photos/seed/${auction.id}/40/40`}
+                                                    className="w-10 h-10 rounded-lg object-cover shadow-sm grayscale group-hover:grayscale-0 transition-all"
+                                                    alt=""
+                                                />
                                                 <div>
                                                     <p className="text-sm font-bold text-accent-black line-clamp-1">{auction.title}</p>
                                                     <p className="text-[10px] text-secondary uppercase font-black tracking-tighter">{auction.category}</p>
@@ -227,7 +242,7 @@ const AdminDashboard = () => {
                                                     </>
                                                 )}
                                                 <button
-                                                    onClick={() => window.location.href = `/auction/${auction.id}`}
+                                                    onClick={() => navigate(`/auction/${auction.id}`)}
                                                     className="p-2 text-secondary-dark hover:text-primary transition-colors"
                                                     title="View Auction"
                                                 >
