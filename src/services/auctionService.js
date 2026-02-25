@@ -1,93 +1,81 @@
-// Auction management service
-// This will be replaced with real API calls when backend is ready
+/**
+ * Auction Service – wired to the real FastAPI backend via api.js
+ */
+import { auctionAPI } from './api';
 
 class AuctionService {
     constructor() {
-        this.auctions = null; // Will be loaded from mock or API
+        this._cache = null;
     }
 
-    // Load auctions (from mock data for now)
-    loadAuctions() {
-        // In real implementation, this would be an API call
-        return new Promise((resolve) => {
-            import('../mock/auctions').then(({ mockAuctions }) => {
-                // Load from localStorage if available (for status persistence)
-                const stored = localStorage.getItem('auctions');
-                if (stored) {
-                    try {
-                        this.auctions = JSON.parse(stored);
-                        resolve(this.auctions);
-                        return;
-                    } catch (e) {
-                        console.error('Error loading stored auctions:', e);
-                    }
-                }
-                this.auctions = mockAuctions;
-                this.saveAuctions();
-                resolve(this.auctions);
-            });
-        });
-    }
-
-    // Save auctions to localStorage (temporary until backend)
-    saveAuctions() {
-        if (this.auctions) {
-            localStorage.setItem('auctions', JSON.stringify(this.auctions));
+    async loadAuctions(params = {}) {
+        try {
+            const res = await auctionAPI.getAll(params);
+            this._cache = res.data;
+            return this._cache;
+        } catch (err) {
+            console.error('Failed to load auctions:', err);
+            return [];
         }
     }
 
-    // Get all auctions
     getAuctions() {
-        return this.auctions || [];
+        return this._cache || [];
     }
 
-    // Get auction by ID
-    getAuction(id) {
-        return this.auctions?.find(a => a.id === Number(id));
-    }
-
-    // Start auction (change status to 'live')
-    startAuction(auctionId) {
-        if (!this.auctions) return null;
-
-        const auction = this.auctions.find(a => a.id === Number(auctionId));
-        if (!auction) return null;
-
-        if (auction.status === 'scheduled') {
-            auction.status = 'live';
-            this.saveAuctions();
-            return auction;
+    async getAuction(id) {
+        try {
+            const res = await auctionAPI.getById(id);
+            return res.data;
+        } catch (err) {
+            console.error('Failed to load auction:', err);
+            return null;
         }
-
-        return null;
     }
 
-    // End auction (change status to 'completed')
-    endAuction(auctionId) {
-        if (!this.auctions) return null;
-
-        const auction = this.auctions.find(a => a.id === Number(auctionId));
-        if (!auction) return null;
-
-        if (auction.status === 'live') {
-            auction.status = 'completed';
-            this.saveAuctions();
-            return auction;
+    async startAuction(auctionId) {
+        try {
+            const res = await auctionAPI.start(auctionId);
+            // Refresh cache
+            await this.loadAuctions();
+            return res.data;
+        } catch (err) {
+            console.error('Failed to start auction:', err);
+            return null;
         }
-
-        return null;
     }
 
-    // Update auction
-    updateAuction(auctionId, updates) {
-        if (!this.auctions) return null;
+    async endAuction(auctionId) {
+        try {
+            const res = await auctionAPI.end(auctionId);
+            await this.loadAuctions();
+            return res.data;
+        } catch (err) {
+            console.error('Failed to end auction:', err);
+            return null;
+        }
+    }
 
-        const index = this.auctions.findIndex(a => a.id === Number(auctionId));
-        if (index === -1) return null;
+    async createAuction(data) {
+        try {
+            const res = await auctionAPI.create(data);
+            await this.loadAuctions();
+            return res.data;
+        } catch (err) {
+            console.error('Failed to create auction:', err);
+            throw err;
+        }
+    }
 
-        this.auctions[index] = { ...this.auctions[index], ...updates };
-        this.saveAuctions();
-        return this.auctions[index];
+    async updateAuction(auctionId, updates) {
+        try {
+            const res = await auctionAPI.update(auctionId, updates);
+            await this.loadAuctions();
+            return res.data;
+        } catch (err) {
+            console.error('Failed to update auction:', err);
+            return null;
+        }
     }
 }
 

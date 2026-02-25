@@ -7,7 +7,8 @@ from jose import jwt
 from passlib.context import CryptContext
 from api.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Switch to pbkdf2_sha256 to avoid bcrypt/passlib compatibility issues
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""

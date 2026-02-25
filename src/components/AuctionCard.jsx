@@ -7,6 +7,11 @@ import { motion } from 'framer-motion';
 const AuctionCard = ({ auction }) => {
     const navigate = useNavigate();
     const status = auction.status || 'scheduled';
+    // Support both snake_case (API) and camelCase (legacy mock)
+    const price = auction.current_price ?? auction.currentPrice ?? auction.starting_price ?? 0;
+    const auctionDate = auction.auction_date || auction.auctionDate;
+    const bidCount = auction.bid_count ?? auction.bids ?? 0;
+    const imageUrl = auction.image_url || auction.image || `https://picsum.photos/seed/${auction.id}/640/480`;
 
     return (
         <motion.div
@@ -17,12 +22,12 @@ const AuctionCard = ({ auction }) => {
         >
             <div className="relative h-48 overflow-hidden">
                 <img
-                    src={auction.image}
+                    src={imageUrl}
                     alt={auction.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute top-3 right-3">
-                    <CountdownTimer auctionDate={auction.auctionDate} status={status} />
+                    <CountdownTimer auctionDate={auctionDate} status={status} />
                 </div>
                 <div className="absolute top-3 left-3">
                     <span className="bg-primary text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded shadow-lg">
@@ -55,7 +60,7 @@ const AuctionCard = ({ auction }) => {
                                         Current Bid
                                     </p>
                                     <p className="text-xl font-black text-slate-900">
-                                        ${auction.currentPrice.toLocaleString()}
+                                        ${price.toLocaleString()}
                                     </p>
                                 </>
                             ) : status === 'completed' ? (
@@ -64,7 +69,7 @@ const AuctionCard = ({ auction }) => {
                                         Final Price
                                     </p>
                                     <p className="text-xl font-black text-slate-900">
-                                        ${auction.currentPrice.toLocaleString()}
+                                        ${price.toLocaleString()}
                                     </p>
                                 </>
                             ) : (
@@ -73,7 +78,7 @@ const AuctionCard = ({ auction }) => {
                                         Starting Price
                                     </p>
                                     <p className="text-xl font-black text-slate-900">
-                                        ${auction.currentPrice.toLocaleString()}
+                                        ${price.toLocaleString()}
                                     </p>
                                 </>
                             )}
@@ -83,7 +88,7 @@ const AuctionCard = ({ auction }) => {
                             {status === 'live' && (
                                 <div className="flex items-center gap-1 text-[10px] font-bold text-primary mb-1">
                                     <TrendingUp className="w-3 h-3" />
-                                    <span>{auction.bids} Bids</span>
+                                    <span>{bidCount} Bids</span>
                                 </div>
                             )}
                             <button

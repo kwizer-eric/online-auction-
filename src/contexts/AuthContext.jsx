@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -14,77 +15,64 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Load user from localStorage on mount
+    // On mount: verify stored token is still valid
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error('Error parsing stored user:', error);
-                localStorage.removeItem('user');
-            }
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            authAPI.getCurrentUser()
+                .then(res => setUser(res.data))
+                .catch(() => {
+                    // Token invalid or expired – clear storage
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('user');
+                })
+                .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
     }, []);
 
     const login = async (email, password) => {
-        // Mock authentication - replace with real API call
-        // For demo: admin@example.com / admin123 = admin, user@example.com / user123 = participant
-        const mockUsers = {
-            'admin@example.com': {
-                id: 1,
-                email: 'admin@example.com',
-                name: 'Admin User',
-                role: 'admin',
-                username: 'admin'
-            },
-            'user@example.com': {
-                id: 2,
-                email: 'user@example.com',
-                name: 'John Doe',
-                role: 'participant',
-                username: 'johndoe'
-            }
-        };
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        if (mockUsers[email] && password.length >= 6) {
-            const userData = mockUsers[email];
-            setUser(userData);
+        try {
+            const res = await authAPI.login(email, password);
+            const { access_token, user: userData } = res.data;
+            localStorage.setItem('access_token', access_token);
             localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
             return { success: true, user: userData };
-        } else {
-            return { success: false, error: 'Invalid email or password' };
+        } catch (err) {
+            const message =
+                err.response?.data?.detail || 'Invalid email or password';
+            return { success: false, error: message };
         }
     };
 
     const register = async (userData) => {
-        // Mock registration - replace with real API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        const newUser = {
-            id: Date.now(),
-            email: userData.email,
-            name: userData.name,
-            username: userData.username,
-            role: 'participant' // Default role
-        };
-
-        setUser(newUser);
-        localStorage.setItem('user', JSON.stringify(newUser));
-        return { success: true, user: newUser };
+        try {
+            const res = await authAPI.register(userData);
+            // Auto-login after successful registration
+            return await login(userData.email, userData.password);
+        } catch (err) {
+            const detail = err.response?.data?.detail;
+            const message =
+                typeof detail === 'string'
+                    ? detail
+                    : Array.isArray(detail)
+                        ? detail.map(d => d.msg).join(', ')
+                        : 'Registration failed';
+            return { success: false, error: message };
+        }
     };
 
     const logout = () => {
         setUser(null);
+        localStorage.removeItem('access_token');
         localStorage.removeItem('user');
     };
 
     const isAdmin = () => user?.role === 'admin';
-    const isParticipant = () => user?.role === 'participant' || user?.role === 'onfield';
+    const isParticipant = () =>
+        user?.role === 'participant' || user?.role === 'onfield';
     const isAuthenticated = () => !!user;
 
     const value = {
@@ -95,8 +83,10 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAdmin,
         isParticipant,
-        isAuthenticated
+        isAuthenticated,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    );
 };

@@ -7,24 +7,53 @@ import {
     DollarSign,
     Tag,
     Info,
-    CheckCircle2
+    CheckCircle2,
+    AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { auctionAPI } from '../services/api';
 
 const CreateAuction = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState('');
+    const [formData, setFormData] = useState({
+        title: '',
+        category: '',
+        starting_price: '',
+        description: '',
+        auction_date: '',
+        location: ''
+    });
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            await auctionAPI.create({
+                title: formData.title,
+                description: formData.description,
+                category: formData.category || 'General',
+                starting_price: Number(formData.starting_price),
+                auction_date: formData.auction_date || null,
+                location: formData.location || null,
+            });
             setIsSuccess(true);
             setTimeout(() => navigate('/admin'), 2000);
-        }, 1500);
+        } catch (err) {
+            const detail = err.response?.data?.detail;
+            const msg = typeof detail === 'string' ? detail
+                : Array.isArray(detail) ? detail.map(d => d.msg).join(', ')
+                    : 'Failed to create auction';
+            setError(msg);
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -43,12 +72,22 @@ const CreateAuction = () => {
                             General Information
                         </h3>
 
+                        {error && (
+                            <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2 mb-2">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <span className="text-sm font-medium">{error}</span>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Auction Title</label>
                                 <input
                                     type="text"
+                                    name="title"
                                     required
+                                    value={formData.title}
+                                    onChange={handleChange}
                                     className="input-field"
                                     placeholder="e.g. 1965 Vintage Porsche Prototype"
                                 />
@@ -58,12 +97,21 @@ const CreateAuction = () => {
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Category</label>
                                 <div className="relative">
                                     <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                    <select className="input-field pl-10 appearance-none bg-white">
-                                        <option>Select Asset Class</option>
+                                    <select
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleChange}
+                                        className="input-field pl-10 appearance-none bg-white"
+                                    >
+                                        <option value="">Select Asset Class</option>
                                         <option>Automobiles</option>
                                         <option>Real Estate</option>
                                         <option>Luxury Watches</option>
                                         <option>Fine Art</option>
+                                        <option>Jewelry</option>
+                                        <option>Electronics</option>
+                                        <option>Art</option>
+                                        <option>Watches</option>
                                     </select>
                                 </div>
                             </div>
@@ -72,7 +120,16 @@ const CreateAuction = () => {
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Starting Price (USD)</label>
                                 <div className="relative">
                                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                                    <input type="number" required className="input-field pl-10" placeholder="50,000" />
+                                    <input
+                                        type="number"
+                                        name="starting_price"
+                                        required
+                                        value={formData.starting_price}
+                                        onChange={handleChange}
+                                        className="input-field pl-10"
+                                        placeholder="50000"
+                                        min="0"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -81,7 +138,10 @@ const CreateAuction = () => {
                             <label className="block text-sm font-bold text-slate-700 mb-2">Asset Description</label>
                             <textarea
                                 rows="4"
+                                name="description"
                                 required
+                                value={formData.description}
+                                onChange={handleChange}
                                 className="input-field"
                                 placeholder="Describe the asset's history, condition, and unique value propositions..."
                             ></textarea>
@@ -110,12 +170,25 @@ const CreateAuction = () => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Auction Date & Time</label>
-                                    <input type="datetime-local" className="input-field" required />
+                                    <input
+                                        type="datetime-local"
+                                        name="auction_date"
+                                        value={formData.auction_date}
+                                        onChange={handleChange}
+                                        className="input-field"
+                                    />
                                     <p className="text-xs text-slate-500 mt-1">The scheduled date and time for the live auction event</p>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Physical Location</label>
-                                    <input type="text" className="input-field" placeholder="e.g. Central Bank Repository - Hall A" required />
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        value={formData.location}
+                                        onChange={handleChange}
+                                        className="input-field"
+                                        placeholder="e.g. Central Bank Repository - Hall A"
+                                    />
                                     <p className="text-xs text-slate-500 mt-1">Where the on-field auction will take place</p>
                                 </div>
                                 <div className="p-3 bg-primary-light rounded-lg border border-primary/10">

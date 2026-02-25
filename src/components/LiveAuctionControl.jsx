@@ -1,32 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { Gavel, Send, X, Square } from 'lucide-react';
-import { socketService } from '../services/socket';
-import { auctionService } from '../services/auctionService';
+import { Gavel, Send, X, Square, AlertCircle } from 'lucide-react';
+import { bidAPI, auctionAPI } from '../services/api';
 
 const LiveAuctionControl = ({ auction, onClose, onAuctionEnd }) => {
-    const [bidAmount, setBidAmount] = useState(auction.currentPrice + 1000);
+    const startingPrice = auction.current_price || auction.currentPrice || 0;
+    const [bidAmount, setBidAmount] = useState(startingPrice + 1000);
     const [currentAuction, setCurrentAuction] = useState(auction);
+    const [isSending, setIsSending] = useState(false);
+    const [isEnding, setIsEnding] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        // Refresh auction data periodically
-        const interval = setInterval(() => {
-            const updated = auctionService.getAuction(auction.id);
-            if (updated) {
-                setCurrentAuction(updated);
-                setBidAmount(updated.currentPrice + 1000);
-            }
-        }, 2000);
-
+        // Refresh auction data every 5s to get latest price
+        const interval = setInterval(async () => {
+            try {
+                const { auctionAPI: api } = await import('../services/api');
+                const res = await api.getById(auction.id);
+                setCurrentAuction(res.data);
+                const newPrice = res.data.current_price || res.data.starting_price || 0;
+                setBidAmount(newPrice + 1000);
+            } catch { }
+        }, 5000);
         return () => clearInterval(interval);
     }, [auction.id]);
 
-    const handleBroadcast = () => {
-        socketService.emit('broadcastFloorBid', {
-            auctionId: auction.id,
-            amount: Number(bidAmount)
-        });
-        // Success feedback or increment recommendation
-        setBidAmount(prev => Number(prev) + 1000);
+    const handleBroadcast = async () => {
+        setError('');
+        setSuccess('');
+        setIsSending(true);
+        try {
+            await bidAPI.placeFloorBid({
+                auction_id: auction.id,
+                amount: Number(bidAmount)
+            });
+            setSuccess('Floor bid synced successfully!');
+            setBidAmount(Number(bidAmount) + 1000);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            const msg = err.response?.data?.detail || 'Failed to sync bid';
+            setError(msg);
+        } finally {
+            setIsSending(false);
+        }
     };
 
     return (
@@ -39,7 +55,9 @@ const LiveAuctionControl = ({ auction, onClose, onAuctionEnd }) => {
                     <div>
                         <h4 className="font-black uppercase tracking-widest text-xs opacity-50">Live Floor Control</h4>
                         <p className="font-bold text-sm truncate max-w-[200px]">{currentAuction.title}</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Current: ${currentAuction.currentPrice.toLocaleString()}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">
+                            Current: ${(currentAuction.current_price || currentAuction.currentPrice || 0).toLocaleString()}
+                        </p>
                     </div>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400">
@@ -86,31 +104,59 @@ const LiveAuctionControl = ({ auction, onClose, onAuctionEnd }) => {
                     <span className="text-lg font-black text-primary">${Number(bidAmount).toLocaleString()}</span>
                 </div>
 
+                {error && (
+                    <div className="flex items-center gap-2 text-rose-400 text-xs bg-rose-900/30 border border-rose-800 rounded-lg p-3">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                        {error}
+                    </div>
+                )}
+                {success && (
+                    <div className="flex items-center gap-2 text-green-400 text-xs bg-green-900/30 border border-green-800 rounded-lg p-3">
+                        ✓ {success}
+                    </div>
+                )}
+
                 <button
                     onClick={handleBroadcast}
-                    disabled={currentAuction.status !== 'live'}
+                    disabled={currentAuction.status !== 'live' || isSending}
                     className="w-full bg-primary hover:bg-primary-hover py-4 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    SYNC FLOOR BID TO ONLINE
+                    {isSending ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Syncing...
+                        </>
+                    ) : (
+                        <>
+                            <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            SYNC FLOOR BID TO ONLINE
+                        </>
+                    )}
                 </button>
 
                 {currentAuction.status === 'live' && (
                     <button
-                        onClick={() => {
-                            auctionService.endAuction(currentAuction.id);
-                            if (onAuctionEnd) onAuctionEnd();
-                            onClose();
+                        disabled={isEnding}
+                        onClick={async () => {
+                            setIsEnding(true);
+                            try {
+                                await auctionAPI.end(currentAuction.id);
+                                if (onAuctionEnd) onAuctionEnd();
+                                onClose();
+                            } catch (err) {
+                                setError('Failed to end auction');
+                                setIsEnding(false);
+                            }
                         }}
-                        className="w-full bg-rose-600 hover:bg-rose-700 py-3 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95"
+                        className="w-full bg-rose-600 hover:bg-rose-700 py-3 rounded-xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
                     >
                         <Square className="w-4 h-4" />
-                        END AUCTION
+                        {isEnding ? 'Ending...' : 'END AUCTION'}
                     </button>
                 )}
 
                 <p className="text-[10px] text-center text-slate-500 font-medium italic">
-                    {currentAuction.status === 'live' 
+                    {currentAuction.status === 'live'
                         ? 'Pushing this will notify all online users instantly.'
                         : 'Auction is not live. Start it from the dashboard.'}
                 </p>

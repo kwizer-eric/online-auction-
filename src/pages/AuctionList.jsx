@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { auctionService } from '../services/auctionService';
+import { auctionAPI } from '../services/api';
 import AuctionCard from '../components/AuctionCard';
 import { motion } from 'framer-motion';
 
@@ -9,18 +9,23 @@ const AuctionList = () => {
     const [activeCategory, setActiveCategory] = useState('All');
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         loadAuctions();
-        // Refresh auctions periodically
-        const interval = setInterval(loadAuctions, 5000);
+        const interval = setInterval(loadAuctions, 15000);
         return () => clearInterval(interval);
     }, []);
 
     const loadAuctions = async () => {
-        await auctionService.loadAuctions();
-        setAuctions(auctionService.getAuctions());
-        setLoading(false);
+        try {
+            const res = await auctionAPI.getAll();
+            setAuctions(res.data || []);
+        } catch (err) {
+            setError('Failed to load auctions. Make sure the backend is running.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const categories = ['All', 'Watches', 'Art', 'Automobiles', 'Electronics', 'Jewelry'];
@@ -63,8 +68,8 @@ const AuctionList = () => {
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
                         className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === cat
-                                ? 'bg-slate-900 text-white shadow-lg'
-                                : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                            ? 'bg-slate-900 text-white shadow-lg'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
                             }`}
                     >
                         {cat}
@@ -72,7 +77,12 @@ const AuctionList = () => {
                 ))}
             </div>
 
-            {loading ? (
+            {error ? (
+                <div className="text-center py-20 bg-rose-50 rounded-2xl border border-rose-200">
+                    <p className="text-rose-700 font-bold text-lg mb-2">⚠ Unable to connect to backend</p>
+                    <p className="text-rose-500 text-sm">{error}</p>
+                </div>
+            ) : loading ? (
                 <div className="text-center py-20">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-600">Loading auctions...</p>

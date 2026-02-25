@@ -1,6 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { socketService } from './services/socket';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Layouts
@@ -17,11 +15,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import CreateAuction from './pages/CreateAuction';
 
 function App() {
-  useEffect(() => {
-    socketService.connect();
-    return () => socketService.disconnect();
-  }, []);
-
   return (
     <Router>
       <Routes>
@@ -35,20 +28,20 @@ function App() {
         </Route>
 
         {/* Protected Routes */}
-        <Route 
-          path="/create-auction" 
+        <Route
+          path="/create-auction"
           element={
             <ProtectedRoute requireAdmin={true}>
               <MainLayout />
             </ProtectedRoute>
-          } 
+          }
         >
           <Route index element={<CreateAuction />} />
         </Route>
 
         {/* Admin Routes with AdminLayout */}
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute requireAdmin={true}>
               <AdminLayout />

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Info, Share2, Heart, ShieldCheck as Shield, MapPin } from 'lucide-react';
-import { auctionService } from '../services/auctionService';
-import { mockBids } from '../mock/bids';
+import { ChevronLeft, Info, Share2, Heart, ShieldCheck as Shield } from 'lucide-react';
+import { auctionAPI, bidAPI } from '../services/api';
 import { socketService } from '../services/socket';
 import CountdownTimer from '../components/CountdownTimer';
 import BidPanel from '../components/BidPanel';
@@ -16,89 +15,96 @@ const AuctionRoom = () => {
     const { id } = useParams();
     const { user, isAuthenticated } = useAuth();
     const [auction, setAuction] = useState(null);
-    const [currentBids, setCurrentBids] = useState(mockBids.filter(b => b.auctionId === Number(id)));
+    const [currentBids, setCurrentBids] = useState([]);
     const [currentPrice, setCurrentPrice] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [bidError, setBidError] = useState('');
 
     useEffect(() => {
         loadAuction();
+        loadBids();
     }, [id]);
 
     const loadAuction = async () => {
-        await auctionService.loadAuctions();
-        const loadedAuction = auctionService.getAuction(id);
-        if (loadedAuction) {
-            setAuction(loadedAuction);
-            setCurrentPrice(loadedAuction.currentPrice || 0);
+        try {
+            const res = await auctionAPI.getById(id);
+            setAuction(res.data);
+            setCurrentPrice(res.data.current_price || res.data.starting_price || 0);
+        } catch (err) {
+            console.error('Failed to load auction:', err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
+    };
+
+    const loadBids = async () => {
+        try {
+            const res = await bidAPI.getAuctionBids(id, { limit: 50 });
+            setCurrentBids(res.data || []);
+        } catch (err) {
+            console.error('Failed to load bids:', err);
+        }
     };
 
     // Refresh auction status periodically
     useEffect(() => {
         if (!auction) return;
-        const interval = setInterval(() => {
-            const updated = auctionService.getAuction(id);
-            if (updated) {
-                setAuction(updated);
-                setCurrentPrice(updated.currentPrice || 0);
-            }
-        }, 3000);
-
+        const interval = setInterval(async () => {
+            try {
+                const res = await auctionAPI.getById(id);
+                setAuction(res.data);
+                setCurrentPrice(res.data.current_price || res.data.starting_price || 0);
+            } catch { }
+        }, 10000);
         return () => clearInterval(interval);
     }, [id, auction]);
 
     useEffect(() => {
-        // Join auction room for real-time updates
-        socketService.joinAuction(Number(id));
+        // Join auction room for real-time WebSocket updates
+        socketService.joinAuction(id);
 
-        // Listen for bid updates
+        // The FastAPI backend broadcasts messages as: { type: 'bid_update', data: {...} }
         const handleBidUpdate = (data) => {
-            if (data.auctionId === Number(id)) {
-                const newBid = {
-                    id: Date.now(),
-                    auctionId: data.auctionId,
-                    bidderName: data.bidderName,
-                    amount: data.newPrice,
-                    type: data.type || 'online',
-                    timestamp: data.timestamp
-                };
-                setCurrentBids(prev => [newBid, ...prev]);
-                setCurrentPrice(data.newPrice);
-            }
+            const newBid = {
+                id: data.id || Date.now(),
+                auction_id: data.auction_id,
+                bidder_name: data.bidder_name || data.user_name || 'Anonymous',
+                amount: data.amount,
+                bid_type: data.bid_type || 'online',
+                created_at: data.created_at || new Date().toISOString()
+            };
+            setCurrentBids(prev => [newBid, ...prev]);
+            setCurrentPrice(data.amount);
         };
 
-        // Listen for participant updates
-        const handleParticipantJoined = (data) => {
-            if (data.auctionId === Number(id)) {
-                // Could update participant count here
-                console.log('Participant joined:', data);
-            }
-        };
-
+        socketService.on('bid_update', handleBidUpdate);
+        // Also listen for legacy event name just in case
         socketService.on('bidUpdated', handleBidUpdate);
-        socketService.on('participantJoined', handleParticipantJoined);
 
         return () => {
-            socketService.leaveAuction(Number(id));
+            socketService.leaveAuction(id);
+            socketService.off('bid_update', handleBidUpdate);
+            socketService.off('bidUpdated', handleBidUpdate);
         };
     }, [id]);
 
-    const handlePlaceBid = (amount) => {
+    const handlePlaceBid = async (amount) => {
         if (!isAuthenticated()) {
             alert('Please login to place bids');
             return;
         }
-
-        // Check if user is registered (optional - can be enforced)
-        // For now, allow bidding if auction is live
-
-        socketService.emit('placeBid', {
-            auctionId: Number(id),
-            amount: amount,
-            bidderName: user?.name || 'Anonymous',
-            userId: user?.id
-        });
+        setBidError('');
+        try {
+            await bidAPI.placeBid({
+                auction_id: Number(id),
+                amount: Number(amount)
+            });
+            // The WebSocket will push the update; also refresh bids as fallback
+            await loadBids();
+        } catch (err) {
+            const msg = err.response?.data?.detail || 'Failed to place bid';
+            setBidError(msg);
+        }
     };
 
     if (loading) {
@@ -230,16 +236,16 @@ const AuctionRoom = () => {
                                 {isLive ? (
                                     <div className="bg-primary-light border border-primary/20 rounded-xl p-4">
                                         <p className="text-sm text-slate-700 leading-relaxed font-medium">
-                                            <strong className="text-primary">Live Event:</strong> This auction is currently being conducted as a live event. 
-                                            Participants are attending both on-field (at {auction.location || 'the physical location'}) and online. 
+                                            <strong className="text-primary">Live Event:</strong> This auction is currently being conducted as a live event.
+                                            Participants are attending both on-field (at {auction.location || 'the physical location'}) and online.
                                             All bids from both groups are being shared in real-time and coordinated by the admin.
                                         </p>
                                     </div>
                                 ) : auctionStatus === 'scheduled' ? (
                                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                                         <p className="text-sm text-slate-700 leading-relaxed font-medium">
-                                            <strong>Scheduled Live Event:</strong> This auction will be conducted as a live event on the scheduled date. 
-                                            You can attend either on-field (at {auction.location || 'the physical location'}) or online. 
+                                            <strong>Scheduled Live Event:</strong> This auction will be conducted as a live event on the scheduled date.
+                                            You can attend either on-field (at {auction.location || 'the physical location'}) or online.
                                             All bids will be shared in real-time between both groups during the live event.
                                         </p>
                                     </div>

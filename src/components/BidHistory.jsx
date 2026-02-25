@@ -22,11 +22,14 @@ const BidHistory = ({ bids }) => {
                                 <User className="w-4 h-4" />
                             </div>
                             <div>
-                                <p className="font-bold text-slate-900 text-sm">{bid.bidderName}</p>
+                                <p className="font-bold text-slate-900 text-sm">
+                                    {bid.bidder_name || bid.bidderName || 'Anonymous'}
+                                </p>
                                 <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
                                     <Clock className="w-3 h-3" />
-                                    {/* Since I didn't install date-fns yet, I'll use a simple fallback or install it */}
-                                    <span>{new Date(bid.timestamp).toLocaleTimeString()}</span>
+                                    <span>
+                                        {new Date(bid.created_at || bid.timestamp).toLocaleTimeString()}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -35,10 +38,10 @@ const BidHistory = ({ bids }) => {
                                 ${bid.amount.toLocaleString()}
                             </p>
                             <div className="flex gap-1 items-center mt-1">
-                                {bid.type === 'floor' && (
+                                {(bid.bid_type || bid.type) === 'floor' && (
                                     <span className="px-2 py-0.5 bg-accent-black text-white text-[8px] font-black rounded uppercase tracking-[0.15em]">Floor</span>
                                 )}
-                                {bid.type === 'online' && (
+                                {(bid.bid_type || bid.type) === 'online' && (
                                     <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 text-[8px] font-black rounded uppercase tracking-[0.15em]">Online</span>
                                 )}
                                 {index === 0 && (

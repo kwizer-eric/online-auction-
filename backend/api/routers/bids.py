@@ -11,7 +11,7 @@ from datetime import datetime
 from database.database import get_db
 from database import models
 from api.schemas import bid_schemas
-from api.dependencies import get_current_user
+from api.dependencies import get_current_user, get_current_admin
 from api.websocket_manager import manager
 
 router = APIRouter()

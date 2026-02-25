@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Zap, Globe2, ArrowRight, Gavel, Users, Building2 } from 'lucide-react';
-import { mockAuctions } from '../mock/auctions';
+import { auctionAPI } from '../services/api';
 import AuctionCard from '../components/AuctionCard';
 import { motion } from 'framer-motion';
 
 const Landing = () => {
-    const featuredAuctions = mockAuctions.slice(0, 3);
+    const [featuredAuctions, setFeaturedAuctions] = useState([]);
+
+    useEffect(() => {
+        auctionAPI.getAll({ status: 'live' })
+            .then(res => {
+                const items = res.data || [];
+                // If no live auctions, fall back to any auctions
+                if (items.length < 3) return auctionAPI.getAll();
+                return { data: items };
+            })
+            .then(res => setFeaturedAuctions((res.data || []).slice(0, 3)))
+            .catch(() => setFeaturedAuctions([]));
+    }, []);
 
 
 
