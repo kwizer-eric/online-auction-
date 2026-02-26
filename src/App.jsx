@@ -7,6 +7,7 @@ import AdminLayout from './layouts/AdminLayout';
 
 // Pages
 import Landing from './pages/Landing';
+import Welcome from './pages/Welcome';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AuctionList from './pages/AuctionList';
@@ -22,11 +23,13 @@ function App() {
       <Routes>
         {/* Public Routes with MainLayout */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Welcome />} />
+          <Route path="/landing" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auctions" element={<AuctionList />} />
           <Route path="/auction/:id" element={<AuctionRoom />} />
+          <Route path="/auctions/:id" element={<AuctionRoom />} />
         </Route>
 
         {/* Protected Routes */}
