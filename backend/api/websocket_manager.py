@@ -87,6 +87,27 @@ class ConnectionManager:
         for conn in disconnected:
             self.disconnect(conn, auction_id)
 
+    async def broadcast_chat_message(self, auction_id: str, message_data: dict):
+        """Broadcast chat message to all connections in auction room"""
+        if auction_id not in self.active_connections:
+            return
+        
+        message = {
+            "type": "chatMessage",
+            "data": message_data
+        }
+        
+        disconnected = []
+        for connection in self.active_connections[auction_id]:
+            try:
+                await connection.send_text(json.dumps(message))
+            except:
+                disconnected.append(connection)
+        
+        # Remove disconnected connections
+        for conn in disconnected:
+            await self.disconnect(conn, auction_id)
+
     async def broadcast_auction_status(self, auction_id: str, status: str):
         """Broadcast auction status change"""
         message = {

@@ -11,7 +11,7 @@ import uvicorn
 
 from database.database import get_db, engine
 from database import models
-from api.routers import auth, auctions, bids, registrations #, chat
+from api.routers import auth, auctions, bids, registrations, chat
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -45,7 +45,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(auctions.router, prefix="/api/auctions", tags=["Auctions"])
 app.include_router(bids.router, prefix="/api/bids", tags=["Bids"])
 app.include_router(registrations.router, prefix="/api/registrations", tags=["Registrations"])
-# app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 
 @app.get("/")
 async def root():

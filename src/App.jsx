@@ -13,6 +13,7 @@ import AuctionList from './pages/AuctionList';
 import AuctionRoom from './pages/AuctionRoom';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateAuction from './pages/CreateAuction';
+import BiddersManagement from './pages/BiddersManagement';
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="auctions" element={<AdminDashboard />} />
+          <Route path="bidders/:auctionId" element={<BiddersManagement />} />
           <Route path="bidders" element={<div className="p-8"><h2 className="text-2xl font-black">Bidders Management</h2><p className="text-slate-500">Feature coming soon.</p></div>} />
         </Route>
 

@@ -8,7 +8,8 @@ import {
     Radio,
     Play,
     Square,
-    AlertTriangle
+    AlertTriangle,
+    UserCheck
 } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import LiveAuctionControl from '../components/LiveAuctionControl';
@@ -241,6 +242,13 @@ const AdminDashboard = () => {
                                                         </button>
                                                     </>
                                                 )}
+                                                <button
+                                                    onClick={() => navigate(`/admin/bidders/${auction.id}`)}
+                                                    className="p-2 text-secondary-dark hover:text-primary transition-colors"
+                                                    title="Manage Bidders"
+                                                >
+                                                    <UserCheck className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => navigate(`/auction/${auction.id}`)}
                                                     className="p-2 text-secondary-dark hover:text-primary transition-colors"

@@ -66,19 +66,31 @@ export const auctionAPI = {
 export const bidAPI = {
     placeBid: (bidData) => api.post('/api/bids', bidData),
     placeFloorBid: (bidData) => api.post('/api/bids/floor', bidData),
-    getAuctionBids: (auctionId, params = {}) => 
+    getAuctionBids: (auctionId, params = {}) =>
         api.get(`/api/bids/auction/${auctionId}`, { params }),
+};
+
+// Chat endpoints
+export const chatAPI = {
+    getHistory: (auctionId) => api.get(`/api/chat/${auctionId}`),
+    sendMessage: (messageData) => api.post('/api/chat', messageData),
 };
 
 // Registration endpoints
 export const registrationAPI = {
     register: (registrationData) => api.post('/api/registrations', registrationData),
-    getAuctionRegistrations: (auctionId) => 
+    getAuctionRegistrations: (auctionId) =>
         api.get(`/api/registrations/auction/${auctionId}`),
-    getUserRegistrations: (userId) => 
+    getUserRegistrations: (userId) =>
         api.get(`/api/registrations/user/${userId}`),
-    unregister: (registrationId) => 
+    unregister: (registrationId) =>
         api.delete(`/api/registrations/${registrationId}`),
+    approve: (registrationId) =>
+        api.post(`/api/registrations/${registrationId}/approve`),
+    reject: (registrationId) =>
+        api.post(`/api/registrations/${registrationId}/reject`),
+    assignBidderNumber: (registrationId, bidderNumber) =>
+        api.put(`/api/registrations/${registrationId}/bidder-number`, null, { params: { bidder_number: bidderNumber } }),
 };
 
 export default api;

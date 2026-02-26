@@ -6,6 +6,7 @@ Handles auction participant registration
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from uuid import UUID
 
 from database.database import get_db
 from database import models
@@ -117,3 +118,67 @@ async def unregister_from_auction(
     db.commit()
     
     return None
+
+@router.post("/{registration_id}/approve", response_model=registration_schemas.Registration)
+async def approve_registration(
+    registration_id: UUID,
+    current_user: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Approve a registration (Admin only)"""
+    registration = db.query(models.Registration).filter(models.Registration.id == registration_id).first()
+    
+    if not registration:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration not found"
+        )
+    
+    registration.status = "approved"
+    db.commit()
+    db.refresh(registration)
+    
+    return registration
+
+@router.post("/{registration_id}/reject", response_model=registration_schemas.Registration)
+async def reject_registration(
+    registration_id: UUID,
+    current_user: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Reject a registration (Admin only)"""
+    registration = db.query(models.Registration).filter(models.Registration.id == registration_id).first()
+    
+    if not registration:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration not found"
+        )
+    
+    registration.status = "rejected"
+    db.commit()
+    db.refresh(registration)
+    
+    return registration
+
+@router.put("/{registration_id}/bidder-number", response_model=registration_schemas.Registration)
+async def update_bidder_number(
+    registration_id: UUID,
+    bidder_number: str,
+    current_user: models.User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Assign or update a bidder number (Admin only)"""
+    registration = db.query(models.Registration).filter(models.Registration.id == registration_id).first()
+    
+    if not registration:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Registration not found"
+        )
+    
+    registration.bidder_number = bidder_number
+    db.commit()
+    db.refresh(registration)
+    
+    return registration
