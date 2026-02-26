@@ -8,39 +8,40 @@ import json
 
 class ConnectionManager:
     def __init__(self):
-        # Dictionary mapping auction_id to list of WebSocket connections
-        self.active_connections: Dict[str, List[WebSocket]] = {}
+        # Dictionary mapping auction_id to list of connection dicts
+        # { auction_id: [ { "websocket": ws, "user_id": uid, "user_name": name }, ... ] }
+        self.active_connections: Dict[str, List[dict]] = {}
 
-    async def connect(self, websocket: WebSocket, auction_id: str):
+    async def connect(self, websocket: WebSocket, auction_id: str, user_id: str = None, user_name: str = None):
         """Accept WebSocket connection and add to auction room"""
         await websocket.accept()
         
         if auction_id not in self.active_connections:
             self.active_connections[auction_id] = []
         
-        self.active_connections[auction_id].append(websocket)
-        
-        # Notify others that someone joined
-        await self.broadcast_participant_update(auction_id, {
-            "type": "participant_joined",
-            "count": len(self.active_connections[auction_id])
+        self.active_connections[auction_id].append({
+            "websocket": websocket,
+            "user_id": user_id,
+            "user_name": user_name or "Anonymous"
         })
+        
+        # Notify others about the participants list
+        await self.broadcast_participant_update(auction_id)
 
     async def disconnect(self, websocket: WebSocket, auction_id: str):
         """Remove WebSocket connection from auction room"""
         if auction_id in self.active_connections:
-            if websocket in self.active_connections[auction_id]:
-                self.active_connections[auction_id].remove(websocket)
+            self.active_connections[auction_id] = [
+                c for c in self.active_connections[auction_id] 
+                if c["websocket"] != websocket
+            ]
             
             # Clean up empty rooms
             if not self.active_connections[auction_id]:
                 del self.active_connections[auction_id]
             else:
-                # Notify others that someone left
-                await self.broadcast_participant_update(auction_id, {
-                    "type": "participant_left",
-                    "count": len(self.active_connections[auction_id])
-                })
+                # Notify others about the participants list
+                await self.broadcast_participant_update(auction_id)
 
     async def send_personal_message(self, message: dict, websocket: WebSocket):
         """Send message to specific WebSocket"""
@@ -59,33 +60,41 @@ class ConnectionManager:
         disconnected = []
         for connection in self.active_connections[auction_id]:
             try:
-                await connection.send_text(json.dumps(message))
+                await connection["websocket"].send_text(json.dumps(message))
             except:
-                disconnected.append(connection)
+                disconnected.append(connection["websocket"])
         
         # Remove disconnected connections
-        for conn in disconnected:
-            self.disconnect(conn, auction_id)
+        for ws in disconnected:
+            await self.disconnect(ws, auction_id)
 
-    async def broadcast_participant_update(self, auction_id: str, data: dict):
-        """Broadcast participant count update"""
+    async def broadcast_participant_update(self, auction_id: str):
+        """Broadcast participant list/count update"""
         if auction_id not in self.active_connections:
             return
         
+        participants = [
+            {"user_id": c["user_id"], "user_name": c["user_name"]}
+            for c in self.active_connections[auction_id]
+        ]
+        
         message = {
             "type": "participantUpdate",
-            "data": data
+            "data": {
+                "count": len(participants),
+                "participants": participants
+            }
         }
         
         disconnected = []
         for connection in self.active_connections[auction_id]:
             try:
-                await connection.send_text(json.dumps(message))
+                await connection["websocket"].send_text(json.dumps(message))
             except:
-                disconnected.append(connection)
+                disconnected.append(connection["websocket"])
         
-        for conn in disconnected:
-            self.disconnect(conn, auction_id)
+        for ws in disconnected:
+            await self.disconnect(ws, auction_id)
 
     async def broadcast_chat_message(self, auction_id: str, message_data: dict):
         """Broadcast chat message to all connections in auction room"""
@@ -100,13 +109,13 @@ class ConnectionManager:
         disconnected = []
         for connection in self.active_connections[auction_id]:
             try:
-                await connection.send_text(json.dumps(message))
+                await connection["websocket"].send_text(json.dumps(message))
             except:
-                disconnected.append(connection)
+                disconnected.append(connection["websocket"])
         
         # Remove disconnected connections
-        for conn in disconnected:
-            await self.disconnect(conn, auction_id)
+        for ws in disconnected:
+            await self.disconnect(ws, auction_id)
 
     async def broadcast_auction_status(self, auction_id: str, status: str):
         """Broadcast auction status change"""

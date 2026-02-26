@@ -14,6 +14,7 @@ import AuctionRoom from './pages/AuctionRoom';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateAuction from './pages/CreateAuction';
 import BiddersManagement from './pages/BiddersManagement';
+import LiveControlCenter from './pages/LiveControlCenter';
 
 function App() {
   return (
@@ -54,6 +55,16 @@ function App() {
           <Route path="bidders/:auctionId" element={<BiddersManagement />} />
           <Route path="bidders" element={<div className="p-8"><h2 className="text-2xl font-black">Bidders Management</h2><p className="text-slate-500">Feature coming soon.</p></div>} />
         </Route>
+
+        {/* Standalone Admin Control Center (Full Screen) */}
+        <Route
+          path="/admin/control/:auctionId"
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <LiveControlCenter />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

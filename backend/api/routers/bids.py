@@ -149,9 +149,32 @@ async def get_auction_bids(
     return bids
 
 @router.websocket("/ws/{auction_id}")
-async def websocket_endpoint(websocket: WebSocket, auction_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket, 
+    auction_id: str,
+    token: str = None,
+    db: Session = Depends(get_db)
+):
     """WebSocket endpoint for real-time bid updates"""
-    await manager.connect(websocket, auction_id)
+    user = None
+    if token:
+        try:
+            # Simple manual decode to avoid dependencies on get_current_user exceptions
+            from jose import jwt
+            from api.config import SECRET_KEY, ALGORITHM
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            if user_id:
+                user = db.query(models.User).filter(models.User.id == user_id).first()
+        except Exception as e:
+            print(f"WS Auth Error: {e}")
+            
+    await manager.connect(
+        websocket, 
+        auction_id, 
+        user_id=str(user.id) if user else None,
+        user_name=user.name if user else "Guest"
+    )
     
     try:
         while True:

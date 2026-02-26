@@ -26,9 +26,25 @@ const BiddersManagement = () => {
     const [editingBidderNumber, setEditingBidderNumber] = useState(null);
     const [tempBidderNumber, setTempBidderNumber] = useState('');
 
+    const [onlineUsers, setOnlineUsers] = useState([]);
+
     useEffect(() => {
         loadData();
     }, [auctionId]);
+
+    useEffect(() => {
+        socketService.joinAuction(auctionId);
+        const handleParticipantUpdate = (data) => {
+            setOnlineUsers(data.participants || []);
+        };
+        socketService.on('participantUpdate', handleParticipantUpdate);
+        return () => {
+            socketService.off('participantUpdate', handleParticipantUpdate);
+            socketService.leaveAuction(auctionId);
+        };
+    }, [auctionId]);
+
+    const isOnline = (userId) => onlineUsers.some(u => u.user_id === userId);
 
     const loadData = async () => {
         try {
@@ -153,8 +169,8 @@ const BiddersManagement = () => {
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filterStatus === status
-                                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg'
-                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                                    ? 'bg-slate-900 text-white border-slate-900 shadow-lg'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
                                     }`}
                             >
                                 {status === 'registered' ? 'Pending' : status}
@@ -190,7 +206,12 @@ const BiddersManagement = () => {
                                                     <span className="font-black text-slate-400">{(reg.user_name || 'U')[0]}</span>
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-slate-900">{reg.user_name || 'Legacy User'}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-bold text-slate-900">{reg.user_name || 'Legacy User'}</p>
+                                                        {isOnline(reg.user_id) && (
+                                                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Online now" />
+                                                        )}
+                                                    </div>
                                                     <p className="text-[10px] text-slate-500 uppercase font-black tracking-tighter">Reg Date: {new Date(reg.registered_at).toLocaleDateString()}</p>
                                                 </div>
                                             </div>
@@ -207,7 +228,7 @@ const BiddersManagement = () => {
                                                 {reg.status === 'rejected' && <XCircle className="w-4 h-4 text-rose-500" />}
                                                 {reg.status === 'registered' && <Clock className="w-4 h-4 text-amber-500" />}
                                                 <span className={`text-xs font-bold ${reg.status === 'approved' ? 'text-green-700' :
-                                                        reg.status === 'rejected' ? 'text-rose-700' : 'text-amber-700'
+                                                    reg.status === 'rejected' ? 'text-rose-700' : 'text-amber-700'
                                                     } capitalize`}>
                                                     {reg.status === 'registered' ? 'Pending' : reg.status}
                                                 </span>

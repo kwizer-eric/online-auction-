@@ -67,14 +67,14 @@ const AuctionRoom = () => {
         const handleBidUpdate = (data) => {
             const newBid = {
                 id: data.id || Date.now(),
-                auction_id: data.auction_id,
-                bidder_name: data.bidder_name || data.user_name || 'Anonymous',
-                amount: data.amount,
-                bid_type: data.bid_type || 'online',
-                created_at: data.created_at || new Date().toISOString()
+                auction_id: data.auctionId || data.auction_id,
+                bidder_name: data.bidderName || data.bidder_name || data.user_name || 'Anonymous',
+                amount: data.newPrice || data.amount,
+                bid_type: data.type || data.bid_type || 'online',
+                created_at: data.timestamp || data.created_at || new Date().toISOString()
             };
             setCurrentBids(prev => [newBid, ...prev]);
-            setCurrentPrice(data.amount);
+            setCurrentPrice(newBid.amount);
         };
 
         socketService.on('bid_update', handleBidUpdate);

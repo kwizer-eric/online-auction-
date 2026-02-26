@@ -13,7 +13,6 @@ import {
     UserCheck
 } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
-import LiveAuctionControl from '../components/LiveAuctionControl';
 import { auctionAPI } from '../services/api';
 import { registrationAPI } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -87,18 +86,6 @@ const AdminDashboard = () => {
 
     return (
         <div className="space-y-8 relative">
-            <AnimatePresence>
-                {liveAuction && (
-                    <div className="fixed bottom-8 right-8 z-[60] w-full max-w-md">
-                        <LiveAuctionControl
-                            auction={liveAuction}
-                            onClose={() => setLiveAuction(null)}
-                            onAuctionEnd={() => loadAuctions()}
-                        />
-                    </div>
-                )}
-            </AnimatePresence>
-
             <div>
                 <h1 className="text-3xl font-black text-accent-black mb-2">Executive Overview</h1>
                 <p className="text-secondary font-medium">Real-time performance metrics and hybrid asset management.</p>
@@ -224,13 +211,10 @@ const AdminDashboard = () => {
                                                 {auction.status === 'live' && (
                                                     <>
                                                         <button
-                                                            onClick={() => setLiveAuction(auction)}
-                                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${liveAuction?.id === auction.id
-                                                                ? 'bg-primary text-white'
-                                                                : 'bg-accent-black text-white hover:bg-primary'
-                                                                }`}
+                                                            onClick={() => navigate(`/admin/control/${auction.id}`)}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-accent-black text-white hover:bg-primary shadow-lg shadow-black/10 hover:shadow-primary/20"
                                                         >
-                                                            <Radio className={`w-3 h-3 ${liveAuction?.id === auction.id ? 'animate-pulse' : ''}`} />
+                                                            <Radio className="w-3 h-3 animate-pulse" />
                                                             Control
                                                         </button>
                                                         <button

@@ -71,7 +71,8 @@ class SocketService {
     _openSocket(auctionId) {
         if (this.socket) return; // Already open
 
-        const url = `${WS_BASE}/api/bids/ws/${auctionId}`;
+        const token = localStorage.getItem('access_token');
+        const url = `${WS_BASE}/api/bids/ws/${auctionId}${token ? `?token=${token}` : ''}`;
         console.log('[WS] Connecting to', url);
 
         try {

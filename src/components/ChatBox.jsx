@@ -5,12 +5,13 @@ import { chatAPI } from '../services/api';
 import { socketService } from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
 
-const ChatBox = () => {
-    const { id: auctionId } = useParams();
+const ChatBox = ({ auctionId: propAuctionId, isAdminView = false }) => {
+    const { id: paramAuctionId } = useParams();
+    const auctionId = propAuctionId || paramAuctionId;
     const { user } = useAuth();
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!auctionId);
     const chatEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -124,12 +125,16 @@ const ChatBox = () => {
                         <div className="w-2 h-2 bg-primary rounded-full relative" />
                     </div>
                     <div>
-                        <h3 className="font-black text-white text-[10px] uppercase tracking-[0.3em] leading-none mb-0.5">Live Terminal</h3>
-                        <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Encrypted Connection</p>
+                        <h3 className="font-black text-white text-[10px] uppercase tracking-[0.3em] leading-none mb-0.5">
+                            {isAdminView ? 'Admin Monitor' : 'Live Terminal'}
+                        </h3>
+                        <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">
+                            {isAdminView ? 'Bidder Communication' : 'Encrypted Connection'}
+                        </p>
                     </div>
                 </div>
                 <div className="px-2 py-1 rounded bg-white/5 border border-white/10">
-                    <span className="text-[9px] font-black text-white/60 tracking-tighter">00:0{messages.length} NODES</span>
+                    <span className="text-[9px] font-black text-white/60 tracking-tighter">{messages.length} MSGS</span>
                 </div>
             </div>
 
